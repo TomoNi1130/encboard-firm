@@ -14,6 +14,7 @@ struct Rs485 {
     bus_.write(send, len);
     wait_us(3);
     de_ = 0;
+    wait_ns(500);
   }
   template <int N>
   void uart_transmit(const uint8_t (&send)[N]) {
