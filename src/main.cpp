@@ -2,7 +2,7 @@
 #include "QEI.hpp"
 #include "mbed.h"
 
-BufferedSerial pc{USBTX, USBRX, 9200};
+BufferedSerial pc{USBTX, USBRX, 115200};
 
 Timer timer;
 // DigitalOut pin(PA_8);

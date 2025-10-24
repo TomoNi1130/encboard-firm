@@ -3,10 +3,8 @@
 AMT21::AMT21(const PinName tx, const PinName rx, const int baud, const PinName de) : rs485_(tx, rx, baud, de) {}
 
 bool AMT21::request_pos(const uint8_t address) {
-  printf("pos\n");
   rs485_.uart_transmit({address});  // request postion -> <node_address>
-  if (uint16_t now_pos; rs485_.uart_receive(&now_pos, sizeof(now_pos), 50ms) && is_valid(now_pos)) {
-    // printf("Raw data: 0x%04X, Valid: %d\r\n", now_pos, is_valid(now_pos));
+  if (uint16_t now_pos; rs485_.uart_receive(&now_pos, sizeof(now_pos), 5ms) && is_valid(now_pos)) {
     pos_[address] = (now_pos & 0x3fff) >> 2;  // 12bit
     return true;
   }
@@ -14,9 +12,8 @@ bool AMT21::request_pos(const uint8_t address) {
 }
 
 bool AMT21::request_turn(const uint8_t address) {
-  printf("turn\n");
   rs485_.uart_transmit({uint8_t(address + 1)});
-  if (uint16_t now_turn; rs485_.uart_receive(&now_turn, sizeof(now_turn), 10ms) && is_valid(now_turn)) {
+  if (uint16_t now_turn; rs485_.uart_receive(&now_turn, sizeof(now_turn), 5ms) && is_valid(now_turn)) {
     now_turn = (now_turn & 0x3fff);  // 14bit
     uint16_t raw = now_turn;
     int turn = (raw & 0x2000) == 0 ? raw : -((~raw & 0x1fff) + 1);

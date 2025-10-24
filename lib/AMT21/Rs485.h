@@ -7,23 +7,28 @@
 struct Rs485 {
   Rs485(const PinName tx, const PinName rx, const int baud, const PinName de) : bus_{tx, rx, baud}, de_{de} {
     bus_.set_blocking(0);
+    bus_.set_format(8, BufferedSerial::None, 1);  // 8N1を明示
   }
-  void uart_transmit(const uint8_t *send, const int len) {
+  void uart_transmit(const uint8_t* send, const int len) {
     de_ = 1;
     flush();
+    // 送信バッファが空になるまで待つ
+    while (bus_.writable() == 0)
+      wait_us(1);
     bus_.write(send, len);
-    wait_us(3);
+    // 送信完了を待つ（ボーレート依存）
+    // 2Mbps: 1byte = 5μs, 余裕を持って2倍
+    wait_us(len * 10);
     de_ = 0;
-    wait_ns(500);
   }
   template <int N>
   void uart_transmit(const uint8_t (&send)[N]) {
     uart_transmit(send, sizeof(send));
   }
-  bool uart_receive(void *buf, const int len, const std::chrono::milliseconds timeout) {
+  bool uart_receive(void* buf, const int len, const std::chrono::milliseconds timeout) {
     auto pre = Kernel::Clock::now();
-    uint8_t *p = reinterpret_cast<uint8_t *>(buf);
-    const uint8_t *end = p + len;
+    uint8_t* p = reinterpret_cast<uint8_t*>(buf);
+    const uint8_t* end = p + len;
     do {
       if (bus_.read(p, 1) > 0 && ++p == end) {
         return (wait_ns(275), true);
